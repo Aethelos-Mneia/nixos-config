@@ -1,5 +1,5 @@
 {
-  description = "Jake's G14 NixOS config";
+  description = "Jake's NixOS configs — g14, grotto, thinkpad, main";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
@@ -19,30 +19,59 @@
 
   outputs = { self, nixpkgs, home-manager, nixos-hardware, stylix, ... }@inputs:
     let
-      system = "x86_64-linux";
+      mkHost = import ./lib/mkHost.nix { inherit inputs; };
     in {
-      nixosConfigurations.g14 = nixpkgs.lib.nixosSystem {
-        inherit system;
-        specialArgs = { inherit inputs; };
-        modules = [
-          # Hardware profile for the 2024 Zephyrus G14 (GA403).
-          # If this errors on first build, fall back to `asus-zephyrus-ga402`
-          # (older model, broader support) until the ga403 module lands.
-          nixos-hardware.nixosModules.asus-zephyrus-ga403
+      nixosConfigurations = {
 
-          stylix.nixosModules.stylix
+        # ── g14 — Asus Zephyrus G14 (GA403UV, 2024) — laptop, AMD+NVIDIA hybrid
+        # If asus-zephyrus-ga403 doesn't exist in nixos-hardware yet, fall back
+        # to asus-zephyrus-ga402.
+        g14 = mkHost {
+          hostname = "g14";
+          extraModules = [
+            nixos-hardware.nixosModules.asus-zephyrus-ga403
+            ./modules/hardware/asus.nix
+            ./modules/hardware/nvidia-hybrid.nix
+            ./modules/profiles/laptop.nix
+          ];
+        };
 
-          ./hosts/g14/configuration.nix
+        # ── grotto — workstation, all-AMD (Ryzen 9 9700 + Radeon 24GB + 64GB ECC)
+        grotto = mkHost {
+          hostname = "grotto";
+          extraModules = [
+            nixos-hardware.nixosModules.common-cpu-amd
+            nixos-hardware.nixosModules.common-cpu-amd-pstate
+            nixos-hardware.nixosModules.common-gpu-amd
+            nixos-hardware.nixosModules.common-pc-ssd
+            ./modules/hardware/amd-gpu.nix
+            ./modules/profiles/workstation.nix
+          ];
+        };
 
-          home-manager.nixosModules.home-manager
-          {
-            home-manager.useGlobalPkgs = true;
-            home-manager.useUserPackages = true;
-            home-manager.backupFileExtension = "hm-bak";
-            home-manager.extraSpecialArgs = { inherit inputs; };
-            home-manager.users.architect = import ./home;
-          }
-        ];
+        # ── thinkpad — laptop, model TBD
+        # TODO at install: add nixos-hardware.nixosModules.lenovo-thinkpad-<model>
+        # and the right GPU module (most modern thinkpads are intel iGPU, no
+        # extra module needed; AMD models import ./modules/hardware/amd-gpu.nix).
+        thinkpad = mkHost {
+          hostname = "thinkpad";
+          extraModules = [
+            ./modules/profiles/laptop.nix
+            # nixos-hardware.nixosModules.lenovo-thinkpad-XXX
+            # ./modules/hardware/amd-gpu.nix   # uncomment if AMD model
+          ];
+        };
+
+        # ── main — desktop, hardware TBD
+        # TODO at install: pick hardware module + GPU module.
+        main = mkHost {
+          hostname = "main";
+          extraModules = [
+            ./modules/profiles/workstation.nix
+            # ./modules/hardware/amd-gpu.nix
+            # OR ./modules/hardware/nvidia-hybrid.nix (with bus IDs)
+          ];
+        };
       };
     };
 }

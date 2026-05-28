@@ -50,9 +50,5 @@
   # Bash completions, etc.
   programs.bash.completion.enable = true;
 
-  # GnuPG agent (for git signing, ssh-via-gpg, etc.)
-  programs.gnupg.agent = {
-    enable = true;
-    enableSSHSupport = false;     # flip true if you use yubikey-as-ssh-key
-  };
+  # GnuPG agent is declared in modules/yubikey.nix (with SSH support on).
 }
