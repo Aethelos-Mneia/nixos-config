@@ -24,12 +24,14 @@
       nixosConfigurations = {
 
         # ── g14 — Asus Zephyrus G14 (GA403UV, 2024) — laptop, AMD+NVIDIA hybrid
-        # If asus-zephyrus-ga403 doesn't exist in nixos-hardware yet, fall back
-        # to asus-zephyrus-ga402.
+        # No dedicated GA403 module in nixos-hardware (verified 2026-05-28:
+        # ga401/ga401iv/ga402/ga402x/ga502/ga503/...). Using ga402x — closest
+        # match, also a hybrid AMD+NVIDIA G14 generation. Swap to ga402 if
+        # ga402x causes issues; upstream a new ga403 module eventually.
         g14 = mkHost {
           hostname = "g14";
           extraModules = [
-            nixos-hardware.nixosModules.asus-zephyrus-ga403
+            nixos-hardware.nixosModules.asus-zephyrus-ga402x
             ./modules/hardware/asus.nix
             ./modules/hardware/nvidia-hybrid.nix
             ./modules/profiles/laptop.nix

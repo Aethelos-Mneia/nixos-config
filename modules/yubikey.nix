@@ -11,22 +11,33 @@
 # You have two YubiKeys (primary + backup). Enroll BOTH before you trust
 # this — losing your only key locks you out everywhere.
 #
-#   # 1. Plug in YubiKey #1 only
-#   pamu2fcfg -u architect | sudo tee    /etc/Yubico/u2f_keys
+# CRITICAL: pam_u2f file format puts ALL keys for one user on ONE line,
+# colon-separated. The naive `pamu2fcfg | tee -a` approach produces TWO
+# LINES which pam_u2f silently ignores. Use the variable-capture pattern
+# below to keep both keys on the same line.
 #
-#   # 2. UNPLUG #1, plug in YubiKey #2
-#   pamu2fcfg -n           | sudo tee -a /etc/Yubico/u2f_keys
-#   # (-n appends without re-emitting the username; same line, second key)
+#   # 1. Ensure the directory exists
+#   sudo mkdir -p /etc/Yubico
 #
-#   # 3. Verify the file has both keys on one line for `architect`
+#   # 2. Plug in YubiKey #1 only — emits full line: `architect:<keydata1>`
+#   LINE1=$(pamu2fcfg -u architect)
+#
+#   # 3. UNPLUG #1, plug in YubiKey #2 — `-n` emits `:<keydata2>` (no user)
+#   KEY2=$(pamu2fcfg -n)
+#
+#   # 4. Write both onto the same line
+#   echo "${LINE1}${KEY2}" | sudo tee /etc/Yubico/u2f_keys
+#
+#   # 5. Verify: one line, starts with `architect:`, then two colon-blocks
 #   sudo cat /etc/Yubico/u2f_keys
 #
-#   # 4. Test: open a new terminal and run `sudo -k && sudo whoami`
-#   #    You should be prompted to touch the key. If it falls through to
-#   #    password, the u2f line didn't match — debug before logging out.
+#   # 6. Test in a NEW terminal (keep this one open as escape hatch!):
+#   #    `sudo -k && sudo whoami`  → should prompt for touch
+#   #    If it falls through to a password prompt, u2f didn't match —
+#   #    debug here before logging out.
 #
 # COMMIT the u2f_keys file? NO. It's bound to specific device keypairs
-# and to /etc/. It lives outside the flake. The flake just turns on the
+# and to /etc/. It lives outside the flake. The flake turns on the
 # machinery; the per-machine enrollment file proves "this key belongs here".
 #
 # ─── RECOVERY ESCAPE HATCHES ────────────────────────────────────────────────
