@@ -1,0 +1,14 @@
+Drop a wallpaper at this path and name it `current.jpg`:
+
+  ~/nixos-config/wallpapers/current.jpg
+
+That filename is referenced from modules/stylix.nix. Stylix uses it as the
+desktop background and (optionally) as a color hint for derived accents.
+
+Pick something cool-toned — blues, greens, deep purples — to harmonize with
+the Tokyo Night Storm palette. The "blue flower + Ignis widgets" screenshot
+that started this whole direction lives in ~/Pictures/Screenshots/ from
+2026-05-17 if you want to revisit the reference aesthetic.
+
+If you change the filename or extension, update `image = ../wallpapers/...`
+in modules/stylix.nix to match.
